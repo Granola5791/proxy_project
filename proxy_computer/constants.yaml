@@ -1,3 +1,6 @@
 network_device: eth0
 pcap_snaplen: 1600
 pcap_promiscuous: false
+
+proxy_ip: "192.168.0.50"
+proxy_port: 8080
