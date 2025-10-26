@@ -8,9 +8,9 @@ COPY go.* ./
 
 RUN go mod download
 
-COPY  . .
+COPY . .
 
-RUN go build -o main main.go
+RUN go build -o main
 
 EXPOSE 8080
 
