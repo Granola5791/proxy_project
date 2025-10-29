@@ -40,8 +40,9 @@ func HandleConnection(conn net.Conn) {
 
 }
 
-func main() {
-	listener, err := net.Listen("tcp", "192.168.1.60:9090")
+func ListenForTCP(ip string, port string) {
+
+	listener, err := net.Listen("tcp", ip+":"+port)
 	if err != nil {
 		log.Fatalf("Failed to connect to server: %v", err)
 	}
@@ -55,5 +56,42 @@ func main() {
 		}
 		go HandleConnection(conn)
 	}
+
+}
+
+func ListenForUDP(ip string, port int) {
+	addr := net.UDPAddr{
+		Port: port,
+		IP:   net.ParseIP(ip),
+	}
+
+	conn, err := net.ListenUDP("udp", &addr)
+	if err != nil {
+		log.Fatalf("Failed to connect to server: %v", err)
+	}
+	defer conn.Close()
+
+	fmt.Println("Server is listening on port 9090")
+	buffer := make([]byte, 1024)
+	for {
+		n, clientAddress, err := conn.ReadFromUDP(buffer)
+		if err != nil {
+			log.Fatalf("Failed to accept connection: %v", err)
+		}
+		fmt.Printf("Received message: %s\n", string(buffer[:n]))
+
+		_, err = conn.WriteToUDP([]byte("Server echo: "), clientAddress)
+		if err != nil {
+			log.Fatalf("Failed to accept connection: %v", err)
+		}
+	}
+
+}
+
+func main() {
+
+	// ListenForTCP("192.168.1.60", "9090")
+
+	ListenForUDP("192.168.1.60", 9090)
 
 }

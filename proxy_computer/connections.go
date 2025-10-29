@@ -17,6 +17,42 @@ type Address struct {
 
 var clientAddress Address
 
+func GetSrcAddressTCP(packet gopacket.Packet) Address {
+	ethLayer := packet.Layer(layers.LayerTypeEthernet)
+	ipLayer := packet.Layer(layers.LayerTypeIPv4)
+	tcpLayer := packet.Layer(layers.LayerTypeTCP)
+
+	if ethLayer != nil && ipLayer != nil && tcpLayer != nil {
+		eth := ethLayer.(*layers.Ethernet)
+		ip := ipLayer.(*layers.IPv4)
+		tcp := tcpLayer.(*layers.TCP)
+		return Address{eth.SrcMAC.String(), ip.SrcIP.String(), int(tcp.SrcPort)}
+	}
+	return Address{"", "", 0}
+}
+
+func GetSrcAddressUDP(packet gopacket.Packet) Address {
+	ethLayer := packet.Layer(layers.LayerTypeEthernet)
+	ipLayer := packet.Layer(layers.LayerTypeIPv4)
+	udpLayer := packet.Layer(layers.LayerTypeUDP)
+
+	if ethLayer != nil && ipLayer != nil && udpLayer != nil {
+		eth := ethLayer.(*layers.Ethernet)
+		ip := ipLayer.(*layers.IPv4)
+		udp := udpLayer.(*layers.UDP)
+		return Address{eth.SrcMAC.String(), ip.SrcIP.String(), int(udp.SrcPort)}
+	}
+	return Address{"", "", 0}
+}
+
+func IsUDP(packet gopacket.Packet) bool {
+	return packet.Layer(layers.LayerTypeUDP) != nil
+}
+
+func IsTCP(packet gopacket.Packet) bool {
+	return packet.Layer(layers.LayerTypeTCP) != nil
+}
+
 func HandleClientConnection() {
 	var packetType string
 	handle, err := pcap.OpenLive(
@@ -70,41 +106,44 @@ func HandleClientConnection() {
 		fmt.Println("to server sending" + packetType)
 		// end log------------------------------------------
 
-		// Extract layers
-		ethLayer := packet.Layer(layers.LayerTypeEthernet)
-		ipLayer := packet.Layer(layers.LayerTypeIPv4)
-		tcpLayer = packet.Layer(layers.LayerTypeTCP)
+		if IsTCP(packet) {
+			clientAddress = GetSrcAddressTCP(packet)
 
-		if ethLayer == nil || ipLayer == nil || tcpLayer == nil {
+			ForwardTCPPacket(
+				packet,
+				handle,
+				Address{
+					Mac:  GetStringFromConfig("server_mac"),
+					Ip:   GetStringFromConfig("server_ip"),
+					Port: GetIntFromConfig("server_port"),
+				},
+				Address{
+					Mac:  GetStringFromConfig("proxy_mac"),
+					Ip:   GetStringFromConfig("proxy_ip"),
+					Port: GetIntFromConfig("proxy_server_port"),
+				},
+			)
+		} else if IsUDP(packet) {
+			clientAddress = GetSrcAddressUDP(packet)
+
+			ForwardUDPPacket(
+				packet,
+				handle,
+				Address{
+					Mac:  GetStringFromConfig("server_mac"),
+					Ip:   GetStringFromConfig("server_ip"),
+					Port: GetIntFromConfig("server_port"),
+				},
+				Address{
+					Mac:  GetStringFromConfig("proxy_mac"),
+					Ip:   GetStringFromConfig("proxy_ip"),
+					Port: GetIntFromConfig("proxy_server_port"),
+				},
+			)
+		} else {
 			fmt.Println("Packet does not contain required layers")
 			return
 		}
-
-		// Cast layers to their respective types
-		eth := ethLayer.(*layers.Ethernet)
-		ip := ipLayer.(*layers.IPv4)
-		tcp := tcpLayer.(*layers.TCP)
-
-		clientAddress = Address{
-			Mac:  eth.SrcMAC.String(),
-			Ip:   ip.SrcIP.String(),
-			Port: int(tcp.SrcPort),
-		}
-
-		ForwardPacket(
-			packet,
-			handle,
-			Address{
-				Mac:  GetStringFromConfig("server_mac"),
-				Ip:   GetStringFromConfig("server_ip"),
-				Port: GetIntFromConfig("server_port"),
-			},
-			Address{
-				Mac:  GetStringFromConfig("proxy_mac"),
-				Ip:   GetStringFromConfig("proxy_ip"),
-				Port: GetIntFromConfig("proxy_server_port"),
-			},
-		)
 	}
 }
 
@@ -159,15 +198,32 @@ func HandleServerConnection() {
 		fmt.Println("to client sending" + packetType)
 		fmt.Println("from server received: " + packetType)
 		// end log------------------------------------------
-		ForwardPacket(
-			packet,
-			handle,
-			clientAddress,
-			Address{
-				Mac:  GetStringFromConfig("proxy_mac"),
-				Ip:   GetStringFromConfig("proxy_ip"),
-				Port: GetIntFromConfig("proxy_client_port"),
-			},
-		)
+
+		if IsTCP(packet) {
+			ForwardTCPPacket(
+				packet,
+				handle,
+				clientAddress,
+				Address{
+					Mac:  GetStringFromConfig("proxy_mac"),
+					Ip:   GetStringFromConfig("proxy_ip"),
+					Port: GetIntFromConfig("proxy_client_port"),
+				},
+			)
+		} else if IsUDP(packet) {
+			ForwardUDPPacket(
+				packet,
+				handle,
+				clientAddress,
+				Address{
+					Mac:  GetStringFromConfig("proxy_mac"),
+					Ip:   GetStringFromConfig("proxy_ip"),
+					Port: GetIntFromConfig("proxy_client_port"),
+				},
+			)
+		} else {
+			fmt.Println("Packet does not contain required layers")
+			return
+		}
 	}
 }
