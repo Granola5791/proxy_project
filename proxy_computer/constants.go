@@ -1,9 +1,10 @@
 package main
 
 import (
-        "log"
+	"fmt"
+	"log"
 
-        "github.com/spf13/viper"
+	"github.com/spf13/viper"
 )
 
 func InitConfig() {
@@ -27,6 +28,7 @@ func GetStringFromConfig(key string) string {
         if viper.IsSet(key) {
                 return viper.GetString(key)
         }
+		fmt.Println("Missing config for key:", key)
         panic(viper.GetString("error.missing_config") + key)
 }
 

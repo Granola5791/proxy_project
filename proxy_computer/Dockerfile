@@ -2,6 +2,8 @@ FROM golang:1.24.5
 
 RUN apt-get update && apt-get install -y libpcap-dev
 
+RUN apt-get install -y iptables
+
 WORKDIR /app
 
 COPY go.* ./

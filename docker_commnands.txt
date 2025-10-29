@@ -1,0 +1,8 @@
+iptables -I INPUT  -p tcp --dport 8081 -j DROP
+iptables -I INPUT  -p tcp --dport 9091 -j DROP
+or
+iptables -I INPUT -p tcp -m multiport --dports 8081,9091 -j DROP
+
+docker run --cap-add=NET_ADMIN --cap-add=NET_RAW --network mynet --ip=192.168.1.50 --mac-address=fe:52:69:93:75:41 --name proxy proxy
+docker run -it --network mynet --ip=192.168.1.70 --mac-address=fe:52:69:93:75:43 --name client client
+docker run -d --network mynet --ip=192.168.1.60 --mac-address=fe:52:69:93:75:42 --name server server

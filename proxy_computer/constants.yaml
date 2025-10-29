@@ -2,5 +2,18 @@ network_device: eth0
 pcap_snaplen: 1600
 pcap_promiscuous: false
 
-proxy_ip: "192.168.0.50"
-proxy_port: 8080
+proxy_ip: "192.168.1.50"
+proxy_client_port: 8081
+proxy_server_port: 9091
+proxy_mac: "fe:52:69:93:75:41"
+
+server_ip: "192.168.1.60"
+server_port: 9090
+server_mac: "fe:52:69:93:75:42"
+
+client_ip: "192.168.1.70"
+client_port: 8080
+client_mac: "fe:52:69:93:75:43"
+
+error:
+  missing_config: "Missing configuration for: "
