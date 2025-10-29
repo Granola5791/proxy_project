@@ -54,7 +54,6 @@ func IsTCP(packet gopacket.Packet) bool {
 }
 
 func HandleClientConnection() {
-	var packetType string
 	handle, err := pcap.OpenLive(
 		GetStringFromConfig("network_device"),
 		int32(GetIntFromConfig("pcap_snaplen")),
@@ -70,45 +69,14 @@ func HandleClientConnection() {
 	}
 	defer handle.Close()
 
-	fmt.Println("listening on " + "dst port " + GetStringFromConfig("proxy_client_port"))
-
 	// Create packet source
 	packets := gopacket.NewPacketSource(handle, handle.LinkType())
 
 	// Listen for packets
 	fmt.Println("Listening for packets...")
 	for packet := range packets.Packets() {
-
-		// start log----------------------------------------
-		tcpLayer := packet.Layer(layers.LayerTypeTCP)
-		if tcpLayer != nil {
-			tcp, _ := tcpLayer.(*layers.TCP)
-			if tcp.SYN && !tcp.ACK {
-				packetType = "SYN"
-			} else if tcp.SYN && tcp.ACK {
-				packetType = "SYN-ACK"
-			} else if tcp.FIN && tcp.ACK {
-				packetType = "FIN-ACK"
-			} else if tcp.FIN && !tcp.ACK {
-				packetType = "FIN"
-			} else if tcp.ACK && !tcp.SYN && !tcp.FIN {
-				packetType = "ACK"
-			} else if tcp.RST {
-				packetType = "RST"
-			} else {
-				packetType = "OTHER"
-			}
-		} else {
-			packetType = "UNKNOWN"
-		}
-
-		fmt.Println("from client received: " + packetType)
-		fmt.Println("to server sending" + packetType)
-		// end log------------------------------------------
-
 		if IsTCP(packet) {
 			clientAddress = GetSrcAddressTCP(packet)
-
 			ForwardTCPPacket(
 				packet,
 				handle,
@@ -125,7 +93,6 @@ func HandleClientConnection() {
 			)
 		} else if IsUDP(packet) {
 			clientAddress = GetSrcAddressUDP(packet)
-
 			ForwardUDPPacket(
 				packet,
 				handle,
@@ -148,7 +115,6 @@ func HandleClientConnection() {
 }
 
 func HandleServerConnection() {
-	var packetType string
 	handle, err := pcap.OpenLive(
 		GetStringFromConfig("network_device"),
 		int32(GetIntFromConfig("pcap_snaplen")),
@@ -164,7 +130,6 @@ func HandleServerConnection() {
 		log.Fatal(err)
 	}
 	defer handle.Close()
-	fmt.Println("listening on " + "dst port " + GetStringFromConfig("proxy_server_port"))
 
 	// Create packet source
 	packets := gopacket.NewPacketSource(handle, handle.LinkType())
@@ -172,33 +137,6 @@ func HandleServerConnection() {
 	// Listen for packets
 	fmt.Println("Listening for server packets...")
 	for packet := range packets.Packets() {
-		// start log----------------------------------------
-		tcpLayer := packet.Layer(layers.LayerTypeTCP)
-		if tcpLayer != nil {
-			tcp, _ := tcpLayer.(*layers.TCP)
-			if tcp.SYN && !tcp.ACK {
-				packetType = "SYN"
-			} else if tcp.SYN && tcp.ACK {
-				packetType = "SYN-ACK"
-			} else if tcp.FIN && tcp.ACK {
-				packetType = "FIN-ACK"
-			} else if tcp.FIN && !tcp.ACK {
-				packetType = "FIN"
-			} else if tcp.ACK && !tcp.SYN && !tcp.FIN {
-				packetType = "ACK"
-			} else if tcp.RST {
-				packetType = "RST"
-			} else {
-				packetType = "OTHER"
-			}
-		} else {
-			packetType = "UNKNOWN"
-		}
-
-		fmt.Println("to client sending" + packetType)
-		fmt.Println("from server received: " + packetType)
-		// end log------------------------------------------
-
 		if IsTCP(packet) {
 			ForwardTCPPacket(
 				packet,

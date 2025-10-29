@@ -43,9 +43,6 @@ func ForwardTCPPacket(packet gopacket.Packet, handle *pcap.Handle, newDstAddr Ad
 		payloadBytes = payload.Payload()
 	}
 
-	fmt.Println("src: ip: " + ip.SrcIP.String() + " port: " + fmt.Sprint(tcp.SrcPort) + " mac: " + eth.SrcMAC.String())
-	fmt.Println("dst: ip: " + ip.DstIP.String() + " port: " + fmt.Sprint(tcp.DstPort) + " mac: " + eth.DstMAC.String())
-
 	// modify headers
 	eth.DstMAC, err = net.ParseMAC(newDstAddr.Mac)
 	if err != nil {
@@ -65,7 +62,6 @@ func ForwardTCPPacket(packet gopacket.Packet, handle *pcap.Handle, newDstAddr Ad
 	// Recalculate checksums
 	ip.Checksum = 0
 	tcp.Checksum = 0
-
 	err = tcp.SetNetworkLayerForChecksum(ip)
 	if err != nil {
 		log.Println("Error setting network layer for checksum:", err)
@@ -96,8 +92,6 @@ func ForwardTCPPacket(packet gopacket.Packet, handle *pcap.Handle, newDstAddr Ad
 		log.Println("Error sending packet:", err)
 		return
 	}
-	fmt.Println("src: ip: " + newSrcAddr.Ip + " port: " + fmt.Sprint(newSrcAddr.Port) + " mac: " + newSrcAddr.Mac)
-	fmt.Println("dst: ip: " + newDstAddr.Ip + " port: " + fmt.Sprint(newDstAddr.Port) + " mac: " + newDstAddr.Mac)
 }
 
 func ForwardUDPPacket(packet gopacket.Packet, handle *pcap.Handle, newDstAddr Address, newSrcAddr Address) {
