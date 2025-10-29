@@ -1,6 +1,7 @@
 network_device: eth0
 pcap_snaplen: 1600
 pcap_promiscuous: false
+pcap_file_name: "pcap_logs.pcap"
 
 proxy_ip: "192.168.1.50"
 proxy_client_port: 8081
