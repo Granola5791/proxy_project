@@ -20,6 +20,8 @@ require (
 )
 
 require (
+	github.com/go-redis/redis v6.15.9+incompatible
+	github.com/joho/godotenv v1.5.1
 	github.com/spf13/viper v1.21.0
 	golang.org/x/sys v0.29.0 // indirect
 )

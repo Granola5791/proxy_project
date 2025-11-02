@@ -16,5 +16,9 @@ client_ip: "192.168.1.70"
 client_port: 8080
 client_mac: "fe:52:69:93:75:43"
 
+redis_ip: "192.168.1.80"
+redis_port: 6065
+
+
 error:
   missing_config: "Missing configuration for: "
