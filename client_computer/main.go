@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"time"
+	// "time"
 )
 
 func SendTCPMessage(message string) {
@@ -43,11 +43,11 @@ func SendUDPMessage(message string) {
 
 func main() {
 	fmt.Println("Client started.")
-	for i := 0; i < 10; i++ {
-		// SendUDPMessage("Hello, UDP!" + fmt.Sprint(i))
-		SendTCPMessage("Hello, TCP!: " + fmt.Sprint(i))
-		time.Sleep(1 * time.Second)
-	}
+	// for i := 0; i < 10; i++ {
+	// SendUDPMessage("Hello, UDP!" + fmt.Sprint(i))
+	SendTCPMessage("Hello, TCP!: ")
+	// 	time.Sleep(1 * time.Second)
+	// }
 
 	// 	SendTCPMessage("Hello, TCP!")
 }

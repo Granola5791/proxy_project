@@ -1,5 +1,5 @@
 network_device: eth0
-pcap_snaplen: 1600
+pcap_snaplen: 65535
 pcap_promiscuous: false
 pcap_file_name: "pcap_logs.pcap"
 

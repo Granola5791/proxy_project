@@ -13,15 +13,6 @@ import (
 
 func ForwardTCPPacket(packet gopacket.Packet, handle *pcap.Handle, newDstAddr Address, newSrcAddr Address) {
 
-	// Print to pcap file
-	captureInfo := packet.Metadata().CaptureInfo
-	data := packet.Data()
-	err := PrintPacketToPcapFile(captureInfo, data)
-	if err != nil {
-		log.Println("Error writing packet to pcap file:", err)
-		return
-	}
-
 	// Extract layers
 	ethLayer := packet.Layer(layers.LayerTypeEthernet)
 	ipLayer := packet.Layer(layers.LayerTypeIPv4)
@@ -108,15 +99,6 @@ func ForwardTCPPacket(packet gopacket.Packet, handle *pcap.Handle, newDstAddr Ad
 }
 
 func ForwardUDPPacket(packet gopacket.Packet, handle *pcap.Handle, newDstAddr Address, newSrcAddr Address) {
-
-	// Print to pcap file
-	captureInfo := packet.Metadata().CaptureInfo
-	data := packet.Data()
-	err := PrintPacketToPcapFile(captureInfo, data)
-	if err != nil {
-		log.Println("Error writing packet to pcap file:", err)
-		return
-	}
 
 	// Extract layers
 	ethLayer := packet.Layer(layers.LayerTypeEthernet)

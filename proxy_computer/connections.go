@@ -168,6 +168,14 @@ func HandleClientConnection() {
 	// Listen for packets
 	fmt.Println("Listening for packets...")
 	for packet := range packets.Packets() {
+		// Print to pcap file
+		captureInfo := packet.Metadata().CaptureInfo
+		data := packet.Data()
+		err := PrintPacketToPcapFile(captureInfo, data)
+		if err != nil {
+			log.Println("Error writing packet to pcap file:", err)
+			return
+		}
 		if IsTCP(packet) {
 			clientAddress = GetSrcAddressTCP(packet)
 			err := HandlePortOut(clientAddress, false)
@@ -175,7 +183,7 @@ func HandleClientConnection() {
 				panic(err)
 			}
 			fmt.Println("client ip: " + clientAddress.Ip)
-			srcPort, err := RedisGet(GetStringFromConfig("redis.ip_key_prefix") + clientAddress.Ip )
+			srcPort, err := RedisGet(GetStringFromConfig("redis.ip_key_prefix") + clientAddress.Ip)
 			if err != nil {
 				panic(err)
 			}
@@ -219,7 +227,6 @@ func HandleClientConnection() {
 			)
 		} else {
 			fmt.Println("Packet does not contain required layers")
-			return
 		}
 	}
 }
@@ -248,6 +255,15 @@ func HandleServerConnection() {
 	// Listen for packets
 	fmt.Println("Listening for server packets...")
 	for packet := range packets.Packets() {
+		// Print to pcap file
+		captureInfo := packet.Metadata().CaptureInfo
+		data := packet.Data()
+		err := PrintPacketToPcapFile(captureInfo, data)
+		if err != nil {
+			log.Println("Error writing packet to pcap file:", err)
+			return
+		}
+		
 		fmt.Println("got server packet")
 		if IsTCP(packet) {
 			port := GetDstPortTCP(packet)
@@ -297,7 +313,6 @@ func HandleServerConnection() {
 			)
 		} else {
 			fmt.Println("Packet does not contain required layers")
-			return
 		}
 	}
 }
