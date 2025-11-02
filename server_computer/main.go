@@ -90,8 +90,8 @@ func ListenForUDP(ip string, port int) {
 
 func main() {
 
-	ListenForTCP("192.168.1.60", "9090")
+	// ListenForTCP("192.168.1.60", "9090")
 
-	// ListenForUDP("192.168.1.60", 9090)
+	ListenForUDP("192.168.1.60", 9090)
 
 }

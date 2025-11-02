@@ -39,6 +39,6 @@ func SendUDPMessage(message string) {
 }
 
 func main() {
-	SendTCPMessage("Hello, TCP!")
-	// SendUDPMessage("Hello, UDP!")
+	// SendTCPMessage("Hello, TCP!")
+	SendUDPMessage("Hello, UDP!")
 }
