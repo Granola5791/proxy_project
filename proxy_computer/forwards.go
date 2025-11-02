@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"strconv"
 
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
@@ -27,7 +28,7 @@ func ForwardTCPPacket(packet gopacket.Packet, handle *pcap.Handle, newDstAddr Ad
 	tcpLayer := packet.Layer(layers.LayerTypeTCP)
 
 	if ethLayer == nil || ipLayer == nil || tcpLayer == nil {
-		fmt.Println("Packet does not contain required layers")
+		fmt.Println("Packet does not contain all required layers")
 		return
 	}
 
@@ -44,20 +45,30 @@ func ForwardTCPPacket(packet gopacket.Packet, handle *pcap.Handle, newDstAddr Ad
 	}
 
 	// modify headers
+	newDstAddrPortAsInt, err := strconv.Atoi(newDstAddr.Port)
+	if err != nil {
+		log.Println("Error parsing port:", err)
+		return
+	}
+	newSrcAddrPortAsInt, err := strconv.Atoi(newSrcAddr.Port)
+	if err != nil {
+		log.Println("Error parsing port:", err)
+		return
+	}
 	eth.DstMAC, err = net.ParseMAC(newDstAddr.Mac)
 	if err != nil {
 		log.Println("Error parsing MAC address:", err)
 		return
 	}
 	ip.DstIP = net.ParseIP(newDstAddr.Ip)
-	tcp.DstPort = layers.TCPPort(newDstAddr.Port)
+	tcp.DstPort = layers.TCPPort(newDstAddrPortAsInt)
 	eth.SrcMAC, err = net.ParseMAC(newSrcAddr.Mac)
 	if err != nil {
 		log.Println("Error parsing MAC address:", err)
 		return
 	}
 	ip.SrcIP = net.ParseIP(newSrcAddr.Ip)
-	tcp.SrcPort = layers.TCPPort(newSrcAddr.Port)
+	tcp.SrcPort = layers.TCPPort(newSrcAddrPortAsInt)
 
 	// Recalculate checksums
 	ip.Checksum = 0
@@ -92,6 +103,8 @@ func ForwardTCPPacket(packet gopacket.Packet, handle *pcap.Handle, newDstAddr Ad
 		log.Println("Error sending packet:", err)
 		return
 	}
+
+	fmt.Println("finished sending packet from " + newSrcAddr.Ip + ":" + newSrcAddr.Port + " to " + newDstAddr.Ip + ":" + newDstAddr.Port)
 }
 
 func ForwardUDPPacket(packet gopacket.Packet, handle *pcap.Handle, newDstAddr Address, newSrcAddr Address) {
@@ -111,7 +124,7 @@ func ForwardUDPPacket(packet gopacket.Packet, handle *pcap.Handle, newDstAddr Ad
 	udpLayer := packet.Layer(layers.LayerTypeUDP)
 
 	if ethLayer == nil || ipLayer == nil || udpLayer == nil {
-		fmt.Println("Packet does not contain required layers")
+		fmt.Println("Packet does not contain all required layers")
 		return
 	}
 
@@ -128,20 +141,30 @@ func ForwardUDPPacket(packet gopacket.Packet, handle *pcap.Handle, newDstAddr Ad
 	}
 
 	// modify headers
+	newDstAddrPortAsInt, err := strconv.Atoi(newDstAddr.Port)
+	if err != nil {
+		log.Println("Error parsing port:", err)
+		return
+	}
+	newSrcAddrPortAsInt, err := strconv.Atoi(newSrcAddr.Port)
+	if err != nil {
+		log.Println("Error parsing port:", err)
+		return
+	}
 	eth.DstMAC, err = net.ParseMAC(newDstAddr.Mac)
 	if err != nil {
 		log.Println("Error parsing MAC address:", err)
 		return
 	}
 	ip.DstIP = net.ParseIP(newDstAddr.Ip)
-	udp.DstPort = layers.UDPPort(newDstAddr.Port)
+	udp.DstPort = layers.UDPPort(newDstAddrPortAsInt)
 	eth.SrcMAC, err = net.ParseMAC(newSrcAddr.Mac)
 	if err != nil {
 		log.Println("Error parsing MAC address:", err)
 		return
 	}
 	ip.SrcIP = net.ParseIP(newSrcAddr.Ip)
-	udp.SrcPort = layers.UDPPort(newSrcAddr.Port)
+	udp.SrcPort = layers.UDPPort(newSrcAddrPortAsInt)
 
 	// Recalculate checksums
 	ip.Checksum = 0

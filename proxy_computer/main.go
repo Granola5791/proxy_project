@@ -23,24 +23,9 @@ func main() {
 		panic(err)
 	}
 
-	InitRedisClient()
-
-	err = RedisSet("test", "test")
-	if err != nil {
-		panic(err)
-	}
-	var val string
-	val, err = RedisGet("test")
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println(val)
-
-	err = RedisDel("test")
-	if err != nil {
-		panic(err)
-	}
+	InitRedis()
 	
+	fmt.Println("initialized redis")
 	go HandleClientConnection()
 	go HandleServerConnection()
 	select {}

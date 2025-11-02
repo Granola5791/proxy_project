@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"time"
 )
 
 func SendTCPMessage(message string) {
@@ -14,13 +13,11 @@ func SendTCPMessage(message string) {
 		log.Fatalf("Failed to connect to server: %v", err)
 	}
 	defer conn.Close()
-	fmt.Println("Connected to server.")
 	_, _ = conn.Write([]byte(message + "\n"))
 	fmt.Println("Message sent to server.")
 
 	resp, _ := bufio.NewReader(conn).ReadString('\n')
 	fmt.Printf("Server response: %s", resp)
-
 }
 
 func SendUDPMessage(message string) {
@@ -42,12 +39,6 @@ func SendUDPMessage(message string) {
 }
 
 func main() {
-	fmt.Println("Client started.")
-	for i := 0; i < 10; i++ {
-		// SendUDPMessage("Hello, UDP!" + fmt.Sprint(i))
-		SendTCPMessage("Hello, TCP!: " + fmt.Sprint(i))
-		time.Sleep(1 * time.Second)
-	}
-
-	// 	SendTCPMessage("Hello, TCP!")
+	SendTCPMessage("Hello, TCP!")
+	// SendUDPMessage("Hello, UDP!")
 }

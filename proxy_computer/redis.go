@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"strings"
 
 	"time"
@@ -36,6 +37,10 @@ func RedisDel(key string) error {
 
 func RedisSetTTL(key string, ttl time.Duration) (bool, error) {
 	return redisClient.Expire(key, ttl).Result()
+}
+
+func RedisSetTTLAt(key string, ttl time.Time) (bool, error) {
+	return redisClient.ExpireAt(key, ttl).Result()
 }
 
 func RedisSubscribe(channel string) *redis.PubSub {
@@ -77,6 +82,10 @@ func IsIPKey(key string) bool {
 	return strings.HasPrefix(key, GetStringFromConfig("redis.port_key_prefix"))
 }
 
+func GetAvailablePort() (string, error) {
+	return RedisDequeue(GetStringFromConfig("redis.available_ports_queue_name"))
+}
+
 func InitAvailablePortsQueue() error {
 	return RedisCreateQueueInRange(
 		GetStringFromConfig("redis.available_ports_queue_name"),
@@ -102,9 +111,31 @@ func HandleExpiredKey(key string) {
 
 func InitRedis() {
 	InitRedisClient()
+	fmt.Println("initialized client")
 	err := InitAvailablePortsQueue()
 	if err != nil {
 		panic(err)
 	}
-	HandleAvailablePorts()
+	fmt.Println("initialized available ports queue")
+	go HandleAvailablePorts()
+	fmt.Println("initialized available ports handler")
+}
+
+func RedisPrintAllKeys() {
+	var cursor uint64
+	for {
+		keys, nextCursor, err := redisClient.Scan(cursor, "*", 100).Result()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		for _, key := range keys {
+			fmt.Println(key)
+		}
+
+		cursor = nextCursor
+		if cursor == 0 {
+			break
+		}
+	}
 }

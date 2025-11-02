@@ -3,10 +3,13 @@ iptables -I INPUT  -p tcp --dport 9091 -j DROP
 or
 iptables -I INPUT -p tcp -m multiport --dports 8081,9091 -j DROP
 
+iptables -I INPUT -p tcp --dport 10000:10100 -j DROP
+
 iptables -I OUTPUT -p icmp --icmp-type port-unreachable -j DROP
 
 
 docker run --cap-add=NET_ADMIN --cap-add=NET_RAW --network mynet --ip=192.168.1.50 --mac-address=fe:52:69:93:75:41 --name proxy proxy
-docker run -it --network mynet --ip=192.168.1.70 --mac-address=fe:52:69:93:75:43 --name client client
+docker run -it --network mynet --ip=192.168.1.70 --mac-address=fe:52:69:93:75:43 --name client1 client1
+docker run -it --network mynet --ip=192.168.1.71 --mac-address=fe:52:69:93:75:44 --name client2 client2
 docker run -d --network mynet --ip=192.168.1.60 --mac-address=fe:52:69:93:75:42 --name server server
 docker run --name redis-server --network mynet --ip=192.168.1.80 -d redis --requirepass "wz3NpXZB529xA5DrSB09"

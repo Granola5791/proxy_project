@@ -5,28 +5,28 @@ pcap_file_name: "pcap_logs.pcap"
 
 addresses:
   proxy_ip: "192.168.1.50"
-  proxy_client_port: 8081
-  proxy_server_port: 9091
+  proxy_client_port: "8081"
+  proxy_server_port: "9091"
   proxy_mac: "fe:52:69:93:75:41"
 
   server_ip: "192.168.1.60"
-  server_port: 9090
+  server_port: "9090"
   server_mac: "fe:52:69:93:75:42"
 
   client_ip: "192.168.1.70"
-  client_port: 8080
+  client_port: "8080"
   client_mac: "fe:52:69:93:75:43"
 
   redis_ip: "192.168.1.80"
-  redis_port: 6065
+  redis_port: "6065"
 
 redis:
   udp_port_ttl: 35
   udp_ip_ttl: 30
   tcp_port_ttl: 65
   tcp_ip_ttl: 60
-  first_availble_port: 10000
-  last_availble_port: 10100
+  first_available_port: 10000
+  last_available_port: 10100
   available_ports_queue_name: "available_ports"
   port_key_prefix: "port_"
   ip_key_prefix: "ip_"
@@ -37,3 +37,5 @@ redis:
 
 error:
   missing_config: "Missing configuration for: "
+  port_conflict: "Port conflict"
+  port_does_not_exist: "Port does not exist"
