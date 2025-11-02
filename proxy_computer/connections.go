@@ -100,11 +100,11 @@ func HandlePortOut(addr Address, isUDP bool) error {
 		portTTL = time.Duration(GetIntFromConfig("redis.tcp_port_ttl")) * time.Second
 		ipTTL = time.Duration(GetIntFromConfig("redis.tcp_ip_ttl")) * time.Second
 	}
-	exists, err := RedisSetTTL(GetStringFromConfig("redis.ip_key_prefix")+addr.Ip, ipTTL)
+	exists, err := RedisSetTTL(GetStringFromConfig("redis.ip_key_prefix")+addr.Ip+":"+addr.Port, ipTTL)
 	if err != nil {
 		return err
 	} else if exists {
-		port, err := RedisGet(GetStringFromConfig("redis.ip_key_prefix") + addr.Ip)
+		port, err := RedisGet(GetStringFromConfig("redis.ip_key_prefix") + addr.Ip + ":" + addr.Port)
 		if err != nil {
 			return err
 		}
@@ -122,7 +122,7 @@ func HandlePortOut(addr Address, isUDP bool) error {
 		if err != nil {
 			return err
 		}
-		err = RedisSet(GetStringFromConfig("redis.ip_key_prefix")+addr.Ip, port, ipTTL)
+		err = RedisSet(GetStringFromConfig("redis.ip_key_prefix")+addr.Ip+":"+addr.Port, port, ipTTL)
 		if err != nil {
 			return err
 		}
@@ -183,7 +183,7 @@ func HandleClientConnection() {
 				panic(err)
 			}
 			fmt.Println("client ip: " + clientAddress.Ip)
-			srcPort, err := RedisGet(GetStringFromConfig("redis.ip_key_prefix") + clientAddress.Ip)
+			srcPort, err := RedisGet(GetStringFromConfig("redis.ip_key_prefix") + clientAddress.Ip + ":" + clientAddress.Port)
 			if err != nil {
 				panic(err)
 			}
@@ -207,7 +207,7 @@ func HandleClientConnection() {
 			if err != nil {
 				panic(err)
 			}
-			srcPort, err := RedisGet(GetStringFromConfig("redis.ip_key_prefix") + clientAddress.Ip)
+			srcPort, err := RedisGet(GetStringFromConfig("redis.ip_key_prefix") + clientAddress.Ip + ":" + clientAddress.Port)
 			if err != nil {
 				panic(err)
 			}
@@ -263,7 +263,7 @@ func HandleServerConnection() {
 			log.Println("Error writing packet to pcap file:", err)
 			return
 		}
-		
+
 		fmt.Println("got server packet")
 		if IsTCP(packet) {
 			port := GetDstPortTCP(packet)
