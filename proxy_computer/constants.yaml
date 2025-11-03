@@ -30,6 +30,8 @@ redis:
   available_ports_queue_name: "available_ports"
   port_key_prefix: "port_"
   ip_key_prefix: "ip_"
+  tcp_key_prefix: "t_"
+  udp_key_prefix: "u_"
   redis_expressions:
     expired_keys_channel: "__keyevent@0__:expired"
     notify_on_event: "notify-keyspace-events"

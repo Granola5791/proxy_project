@@ -77,10 +77,6 @@ func IsPortKey(key string) bool {
 	return strings.HasPrefix(key, GetStringFromConfig("redis.ip_key_prefix"))
 }
 
-func IsIPKey(key string) bool {
-	return strings.HasPrefix(key, GetStringFromConfig("redis.port_key_prefix"))
-}
-
 func GetAvailablePort() (string, error) {
 	return RedisDequeue(GetStringFromConfig("redis.available_ports_queue_name"))
 }
