@@ -117,7 +117,6 @@ func HandlePortOut(addr Address, isUDP bool) error {
 		}
 		return nil
 	} else {
-		fmt.Println("creating new")
 		port, err := GetAvailablePort()
 		if err != nil {
 			return err
@@ -182,7 +181,6 @@ func HandleClientConnection() {
 			if err != nil {
 				panic(err)
 			}
-			fmt.Println("client ip: " + clientAddress.Ip)
 			srcPort, err := RedisGet(GetStringFromConfig("redis.ip_key_prefix") + clientAddress.Ip + ":" + clientAddress.Port)
 			if err != nil {
 				panic(err)
@@ -242,7 +240,6 @@ func HandleServerConnection() {
 		log.Fatal(err)
 	}
 
-	fmt.Println("src host " + GetStringFromConfig("addresses.server_ip"))
 	err = handle.SetBPFFilter("src host " + GetStringFromConfig("addresses.server_ip"))
 	if err != nil {
 		log.Fatal(err)
@@ -267,7 +264,6 @@ func HandleServerConnection() {
 		fmt.Println("got server packet")
 		if IsTCP(packet) {
 			port := GetDstPortTCP(packet)
-			fmt.Println("port: " + port)
 			err := HandlePortIn(port)
 			if err != nil {
 				panic(err)
@@ -277,9 +273,6 @@ func HandleServerConnection() {
 				fmt.Println("err: " + err.Error())
 				continue
 			}
-			fmt.Println("client ip: " + clientAddress.Ip)
-			fmt.Println("client mac: " + clientAddress.Mac)
-			fmt.Println("client port: " + clientAddress.Port)
 			go ForwardTCPPacket(
 				packet,
 				handle,

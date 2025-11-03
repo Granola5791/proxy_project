@@ -94,8 +94,6 @@ func ForwardTCPPacket(packet gopacket.Packet, handle *pcap.Handle, newDstAddr Ad
 		log.Println("Error sending packet:", err)
 		return
 	}
-
-	fmt.Println("finished sending packet from " + newSrcAddr.Ip + ":" + newSrcAddr.Port + " to " + newDstAddr.Ip + ":" + newDstAddr.Port)
 }
 
 func ForwardUDPPacket(packet gopacket.Packet, handle *pcap.Handle, newDstAddr Address, newSrcAddr Address) {

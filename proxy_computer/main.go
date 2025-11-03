@@ -1,8 +1,6 @@
 package main
 
 import (
-	"fmt"
-
 	"github.com/google/gopacket/layers"
 )
 
@@ -25,7 +23,6 @@ func main() {
 
 	InitRedis()
 	
-	fmt.Println("initialized redis")
 	go HandleClientConnection()
 	go HandleServerConnection()
 	select {}

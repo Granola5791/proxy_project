@@ -18,7 +18,6 @@ func InitRedisClient() {
 		Password: GetEnv("REDIS_PASSWORD"),
 		DB:       0, // use default DB
 	})
-	fmt.Println("password: ", GetEnv("REDIS_PASSWORD"))
 }
 
 func RedisGet(key string) (string, error) {
@@ -111,14 +110,11 @@ func HandleExpiredKey(key string) {
 
 func InitRedis() {
 	InitRedisClient()
-	fmt.Println("initialized client")
 	err := InitAvailablePortsQueue()
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println("initialized available ports queue")
 	go HandleAvailablePorts()
-	fmt.Println("initialized available ports handler")
 }
 
 func RedisPrintAllKeys() {
