@@ -101,7 +101,8 @@ func HandleExpiredKey(key string) {
 	if !IsPortKey(key) {
 		return
 	}
-	RedisEnqueue(GetStringFromConfig("redis.available_ports_queue_name"), key)
+	prefixLen := len(GetStringFromConfig("redis.port_key_prefix"))
+	RedisEnqueue(GetStringFromConfig("redis.available_ports_queue_name")[prefixLen:], key)
 }
 
 func InitRedis() {
