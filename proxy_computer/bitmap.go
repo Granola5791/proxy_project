@@ -23,3 +23,11 @@ func (b *BitMap) GetBit(index int) bool {
 func (b *BitMap) ToggleBit(index int) {
 	b.Bitmap ^= 1 << index
 }
+
+func (b *BitMap) Clear() {
+	b.Bitmap = 0
+}
+
+func (b *BitMap) IsEmpty() bool {
+	return b.Bitmap == 0
+}

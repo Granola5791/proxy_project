@@ -65,6 +65,18 @@ func RedisCreateQueueInRange(key string, start int, end int) error {
 	return err
 }
 
+func RedisCreateQueueWithValues(key string, values []string) error {
+	pipe := redisClient.Pipeline()
+	for _, value := range values {
+		err := pipe.LPush(key, value).Err()
+		if err != nil {
+			return err
+		}
+	}
+	_, err := pipe.Exec()
+	return err
+}
+
 func RedisEnqueue(key string, value string) error {
 	return redisClient.LPush(key, value).Err()
 }
