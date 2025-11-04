@@ -27,6 +27,7 @@ func InitServers() {
 	availableServers = NewBitMap()
 	AssignServerIps()
 	InitServersAvailability()
+	go ConstantlyUpdateServersAvailability()
 }
 
 func GetServerAvailability(index int) bool {
