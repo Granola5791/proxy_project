@@ -43,7 +43,7 @@ redis:
   available_ports_queue_name: "available_ports"
   available_servers_queue_name: "available_servers"
   port_key_prefix: "port_"
-  server_addr_field: "server_address"
+  server_index_field: "server_index"
   port_field: "port"
   ip_key_prefix: "ip_"
   tcp_key_prefix: "t_"

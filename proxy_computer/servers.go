@@ -56,9 +56,9 @@ func SetServerAvailability(index int, available bool) {
 	}
 }
 
-func GetNextAvailavleServer() (Address, error) {
+func GetNextAvailavleServer() (int, error) {
 	if availableServers.IsEmpty() {
-		return Address{}, errors.New(GetStringFromConfig("error.no_available_servers"))
+		return 0, errors.New(GetStringFromConfig("error.no_available_servers"))
 	}
 
 	temp := currAvailableServerIndex
@@ -67,9 +67,9 @@ func GetNextAvailavleServer() (Address, error) {
 		currAvailableServerIndex = (currAvailableServerIndex + 1) % len(servers)
 	}
 	if !GetServerAvailability(currAvailableServerIndex) {
-		return Address{}, errors.New(GetStringFromConfig("error.no_available_servers"))
+		return 0, errors.New(GetStringFromConfig("error.no_available_servers"))
 	}
-	return servers[currAvailableServerIndex], nil
+	return currAvailableServerIndex, nil
 
 }
 

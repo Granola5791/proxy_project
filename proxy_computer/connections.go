@@ -96,17 +96,23 @@ func HandlePortOut(addr Address, isUDP bool) error {
 		if !exists {
 			return errors.New(GetStringFromConfig("error.port_conflict"))
 		}
-		return nil
+		serverIndex, err := GetServerIndxByClientAddr(addr, isUDP)
+		if err != nil {
+			return err
+		}
+		if !GetServerAvailability(serverIndex) {
+			return SetNewServer(addr, isUDP)
+		}
 	} else {
 		port, err := GetAvailablePort()
 		if err != nil {
 			return err
 		}
-		serverAddr, err := GetNextAvailavleServer()
+		serverIndex, err := GetNextAvailavleServer()
 		if err != nil {
 			return err
 		}
-		err = SetServerAddrAndPortByClientAddr(addr, serverAddr, port, isUDP, ipTTL)
+		err = SetServerIndxAndPortByClientAddr(addr, serverIndex, port, isUDP, ipTTL)
 		if err != nil {
 			return err
 		}
@@ -114,8 +120,8 @@ func HandlePortOut(addr Address, isUDP bool) error {
 		if err != nil {
 			return err
 		}
-		return nil
 	}
+	return nil
 }
 
 func HandlePortIn(port string) error {
@@ -170,14 +176,14 @@ func HandleClientConnection() {
 			if err != nil {
 				panic(err)
 			}
-			serverAddr, err := GetServerAddrByClientAddr(clientAddress, false)
+			serverIndex, err := GetServerIndxByClientAddr(clientAddress, false)
 			if err != nil {
 				panic(err)
 			}
 			go ForwardTCPPacket(
 				packet,
 				handle,
-				serverAddr,
+				servers[serverIndex],
 				Address{
 					Mac:  GetStringFromConfig("addresses.proxy_mac"),
 					Ip:   GetStringFromConfig("addresses.proxy_ip"),
@@ -194,14 +200,14 @@ func HandleClientConnection() {
 			if err != nil {
 				panic(err)
 			}
-			serverAddr, err := GetServerAddrByClientAddr(clientAddress, true)
+			serverIndex, err := GetServerIndxByClientAddr(clientAddress, true)
 			if err != nil {
 				panic(err)
 			}
 			go ForwardUDPPacket(
 				packet,
 				handle,
-				serverAddr,
+				servers[serverIndex],
 				Address{
 					Mac:  GetStringFromConfig("addresses.proxy_mac"),
 					Ip:   GetStringFromConfig("addresses.proxy_ip"),

@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -11,6 +12,10 @@ type Address struct {
 	Mac  string
 	Ip   string
 	Port string
+}
+
+func (a Address) String() string {
+	return fmt.Sprintf("%s,%s,%s", a.Mac, a.Ip, a.Port)
 }
 
 func ParseAddr(addr string) Address {
@@ -29,9 +34,9 @@ func GetClientAddrByPort(port string) (Address, error) {
 	return ParseAddr(addr), nil
 }
 
-func GetServerAddrByClientAddr(addr Address, isUDP bool) (server Address, err error) {
+func GetServerIndxByClientAddr(addr Address, isUDP bool) (serverIndx int, err error) {
 	var transportTypePrefix string
-	serverAddrField := GetStringFromConfig("redis.server_addr_field")
+	serverAddrField := GetStringFromConfig("redis.server_index_field")
 	if isUDP {
 		transportTypePrefix = GetStringFromConfig("redis.udp_key_prefix")
 	} else {
@@ -39,9 +44,13 @@ func GetServerAddrByClientAddr(addr Address, isUDP bool) (server Address, err er
 	}
 	res, err := RedisHGet(transportTypePrefix+addr.Ip+":"+addr.Port, serverAddrField)
 	if err != nil {
-		return Address{}, err
+		return 0, err
 	}
-	return ParseAddr(res), nil
+	serverIndx, err = strconv.Atoi(res)
+	if err != nil {
+		return 0, err
+	}
+	return serverIndx, nil
 }
 
 func GetPortByClientAddr(addr Address, isUDP bool) (port string, err error) {
@@ -62,12 +71,12 @@ func GetPortByClientAddr(addr Address, isUDP bool) (port string, err error) {
 func SetClientAddrByPort(addr Address, port string, ttl time.Duration) error {
 	return RedisSet(
 		GetStringFromConfig("redis.port_key_prefix")+port,
-		fmt.Sprintf("%s,%s,%s", addr.Mac, addr.Ip, addr.Port),
+		addr.String(),
 		ttl,
 	)
 }
 
-func SetServerAddrAndPortByClientAddr(clientAddr Address, serverAddr Address, port string, isUDP bool, ttl time.Duration) error {
+func SetServerIndxAndPortByClientAddr(clientAddr Address, serverIndex int, port string, isUDP bool, ttl time.Duration) error {
 	var transportTypePrefix string
 	if isUDP {
 		transportTypePrefix = GetStringFromConfig("redis.udp_key_prefix")
@@ -76,8 +85,8 @@ func SetServerAddrAndPortByClientAddr(clientAddr Address, serverAddr Address, po
 	}
 	err := RedisHSetWithTTL(
 		transportTypePrefix+clientAddr.Ip+":"+clientAddr.Port,
-		GetStringFromConfig("redis.server_addr_field"),
-		fmt.Sprintf("%s,%s,%s", serverAddr.Mac, serverAddr.Ip, serverAddr.Port),
+		GetStringFromConfig("redis.server_index_field"),
+		strconv.Itoa(serverIndex),
 		ttl,
 	)
 	if err != nil {
@@ -87,5 +96,23 @@ func SetServerAddrAndPortByClientAddr(clientAddr Address, serverAddr Address, po
 		transportTypePrefix+clientAddr.Ip+":"+clientAddr.Port,
 		GetStringFromConfig("redis.port_field"),
 		port,
+	)
+}
+
+func SetNewServer(clientAddr Address, isUDP bool) error {
+	var transportTypePrefix string
+	if isUDP {
+		transportTypePrefix = GetStringFromConfig("redis.udp_key_prefix")
+	} else {
+		transportTypePrefix = GetStringFromConfig("redis.tcp_key_prefix")
+	}
+	newAvailableServerIndex, err := GetNextAvailavleServer()
+	if err != nil {
+		return err
+	}
+	return RedisHSet(
+		transportTypePrefix+clientAddr.Ip+":"+clientAddr.Port,
+		GetStringFromConfig("redis.server_index_field"),
+		strconv.Itoa(newAvailableServerIndex),
 	)
 }
