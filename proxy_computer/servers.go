@@ -1,24 +1,37 @@
 package main
 
 import (
+	"errors"
 	"net"
 	"time"
 )
 
 var availableServers *BitMap
-var serverIps []string
+var servers []Address
 var currAvailableServerIndex int
 
 func AssignServerIps() {
-	serverIps = []string{
-		GetStringFromConfig("addresses.server1_ip"),
-		GetStringFromConfig("addresses.server2_ip"),
-		GetStringFromConfig("addresses.server3_ip"),
+	servers = []Address{
+		Address{
+			Mac:  GetStringFromConfig("addresses.server1_mac"),
+			Ip:   GetStringFromConfig("addresses.server1_ip"),
+			Port: GetStringFromConfig("addresses.server1_port"),
+		},
+		Address{
+			Mac:  GetStringFromConfig("addresses.server2_mac"),
+			Ip:   GetStringFromConfig("addresses.server2_ip"),
+			Port: GetStringFromConfig("addresses.server2_port"),
+		},
+		Address{
+			Mac:  GetStringFromConfig("addresses.server3_mac"),
+			Ip:   GetStringFromConfig("addresses.server3_ip"),
+			Port: GetStringFromConfig("addresses.server3_port"),
+		},
 	}
 }
 
 func InitServersAvailability() {
-	for i := range serverIps {
+	for i := range servers {
 		UpdateServerAvailability(i)
 	}
 }
@@ -42,26 +55,26 @@ func SetServerAvailability(index int, available bool) {
 	}
 }
 
-func GetNextAvailavleServer() (string, error) {
+func GetNextAvailavleServer() (Address, error) {
 	if availableServers.IsEmpty() {
-		return "", nil
+		return Address{}, errors.New(GetStringFromConfig("error.no_available_servers"))
 	}
 
 	temp := currAvailableServerIndex
-	currAvailableServerIndex = (currAvailableServerIndex + 1) % len(serverIps)
+	currAvailableServerIndex = (currAvailableServerIndex + 1) % len(servers)
 	for !GetServerAvailability(currAvailableServerIndex) && currAvailableServerIndex != temp {
-		currAvailableServerIndex = (currAvailableServerIndex + 1) % len(serverIps)
+		currAvailableServerIndex = (currAvailableServerIndex + 1) % len(servers)
 	}
 	if !GetServerAvailability(currAvailableServerIndex) {
-		return "", nil
+		return Address{}, errors.New(GetStringFromConfig("error.no_available_servers"))
 	}
-	return serverIps[currAvailableServerIndex], nil
+	return servers[currAvailableServerIndex], nil
 
 }
 
-func isServerUp(serverIp string) bool {
+func isServerUp(server Address) bool {
 	timeout := time.Duration(GetIntFromConfig("servers.availability_check_timeout_sec")) * time.Second
-	conn, err := net.DialTimeout("tcp", serverIp, timeout)
+	conn, err := net.DialTimeout("tcp", server.Ip+":"+server.Port, timeout)
 	if err != nil {
 		return false
 	}
@@ -70,7 +83,7 @@ func isServerUp(serverIp string) bool {
 }
 
 func UpdateServerAvailability(index int) {
-	if isServerUp(serverIps[index]) {
+	if isServerUp(servers[index]) {
 		availableServers.SetBitOn(index)
 	}
 }
@@ -78,7 +91,7 @@ func UpdateServerAvailability(index int) {
 func ConstantlyUpdateServersAvailability() {
 	interval := time.Duration(GetIntFromConfig("servers.availability_check_interval_sec")) * time.Second
 	for {
-		for i := range serverIps {
+		for i := range servers {
 			go UpdateServerAvailability(i)
 		}
 		time.Sleep(interval)
