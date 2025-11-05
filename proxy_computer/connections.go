@@ -5,35 +5,12 @@ import (
 	"fmt"
 	"log"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 	"github.com/google/gopacket/pcap"
 )
-
-type Address struct {
-	Mac  string
-	Ip   string
-	Port string
-}
-
-func ParseAddr(addr string) Address {
-	parts := strings.Split(addr, ",")
-	if len(parts) != 3 {
-		log.Fatalf("invalid address format: %v", addr)
-	}
-	return Address{parts[0], parts[1], parts[2]}
-}
-
-func GetAddrByPort(port string) (Address, error) {
-	addr, err := RedisGet(GetStringFromConfig("redis.port_key_prefix") + port)
-	if err != nil {
-		return Address{}, err
-	}
-	return ParseAddr(addr), nil
-}
 
 func GetSrcAddressTCP(packet gopacket.Packet) Address {
 	ethLayer := packet.Layer(layers.LayerTypeEthernet)
