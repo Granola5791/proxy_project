@@ -42,6 +42,22 @@ func RedisSetTTLAt(key string, ttl time.Time) (bool, error) {
 	return redisClient.ExpireAt(key, ttl).Result()
 }
 
+func RedisHSet(key string, field string, value string) error {
+	return redisClient.HSet(key, field, value).Err()
+}
+
+func RedisHGet(key string, field string) (string, error) {
+	return redisClient.HGet(key, field).Result()
+}
+
+func RedisHSetWithTTL(key string, field string, value string, ttl time.Duration) error {
+	pipe := redisClient.Pipeline()
+	pipe.HSet(key, field, value)
+	pipe.Expire(key, ttl)
+	_, err := pipe.Exec()
+	return err
+}
+
 func RedisSubscribe(channel string) *redis.PubSub {
 	return redisClient.Subscribe(channel)
 }
@@ -57,6 +73,18 @@ func RedisCreateQueueInRange(key string, start int, end int) error {
 	pipe := redisClient.Pipeline()
 	for i := start; i <= end; i++ {
 		err := pipe.LPush(key, i).Err()
+		if err != nil {
+			return err
+		}
+	}
+	_, err := pipe.Exec()
+	return err
+}
+
+func RedisCreateQueueWithValues(key string, values []string) error {
+	pipe := redisClient.Pipeline()
+	for _, value := range values {
+		err := pipe.LPush(key, value).Err()
 		if err != nil {
 			return err
 		}

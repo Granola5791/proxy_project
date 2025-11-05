@@ -5,35 +5,12 @@ import (
 	"fmt"
 	"log"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 	"github.com/google/gopacket/pcap"
 )
-
-type Address struct {
-	Mac  string
-	Ip   string
-	Port string
-}
-
-func ParseAddr(addr string) Address {
-	parts := strings.Split(addr, ",")
-	if len(parts) != 3 {
-		log.Fatalf("invalid address format: %v", addr)
-	}
-	return Address{parts[0], parts[1], parts[2]}
-}
-
-func GetAddrByPort(port string) (Address, error) {
-	addr, err := RedisGet(GetStringFromConfig("redis.port_key_prefix") + port)
-	if err != nil {
-		return Address{}, err
-	}
-	return ParseAddr(addr), nil
-}
 
 func GetSrcAddressTCP(packet gopacket.Packet) Address {
 	ethLayer := packet.Layer(layers.LayerTypeEthernet)
@@ -108,7 +85,7 @@ func HandlePortOut(addr Address, isUDP bool) error {
 	if err != nil {
 		return err
 	} else if exists {
-		port, err := RedisGet(transportTypePrefix + addr.Ip + ":" + addr.Port)
+		port, err := GetPortByClientAddr(addr, isUDP)
 		if err != nil {
 			return err
 		}
@@ -119,22 +96,32 @@ func HandlePortOut(addr Address, isUDP bool) error {
 		if !exists {
 			return errors.New(GetStringFromConfig("error.port_conflict"))
 		}
-		return nil
+		serverIndex, err := GetServerIndxByClientAddr(addr, isUDP)
+		if err != nil {
+			return err
+		}
+		if !GetServerAvailability(serverIndex) {
+			return SetNewServer(addr, isUDP)
+		}
 	} else {
 		port, err := GetAvailablePort()
 		if err != nil {
 			return err
 		}
-		err = RedisSet(transportTypePrefix+addr.Ip+":"+addr.Port, port, ipTTL)
+		serverIndex, err := GetNextAvailavleServer()
 		if err != nil {
 			return err
 		}
-		err = RedisSet(portPrefix+port, fmt.Sprintf("%s,%s,%s", addr.Mac, addr.Ip, addr.Port), portTTL)
+		err = SetServerIndxAndPortByClientAddr(addr, serverIndex, port, isUDP, ipTTL)
 		if err != nil {
 			return err
 		}
-		return nil
+		err = SetClientAddrByPort(addr, port, portTTL)
+		if err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
 func HandlePortIn(port string) error {
@@ -185,18 +172,18 @@ func HandleClientConnection() {
 			if err != nil {
 				panic(err)
 			}
-			srcPort, err := RedisGet(GetStringFromConfig("redis.tcp_key_prefix") + clientAddress.Ip + ":" + clientAddress.Port)
+			srcPort, err := GetPortByClientAddr(clientAddress, false)
+			if err != nil {
+				panic(err)
+			}
+			serverIndex, err := GetServerIndxByClientAddr(clientAddress, false)
 			if err != nil {
 				panic(err)
 			}
 			go ForwardTCPPacket(
 				packet,
 				handle,
-				Address{
-					Mac:  GetStringFromConfig("addresses.server_mac"),
-					Ip:   GetStringFromConfig("addresses.server_ip"),
-					Port: GetStringFromConfig("addresses.server_port"),
-				},
+				servers[serverIndex],
 				Address{
 					Mac:  GetStringFromConfig("addresses.proxy_mac"),
 					Ip:   GetStringFromConfig("addresses.proxy_ip"),
@@ -209,18 +196,18 @@ func HandleClientConnection() {
 			if err != nil {
 				panic(err)
 			}
-			srcPort, err := RedisGet(GetStringFromConfig("redis.udp_key_prefix") + clientAddress.Ip + ":" + clientAddress.Port)
+			srcPort, err := GetPortByClientAddr(clientAddress, true)
+			if err != nil {
+				panic(err)
+			}
+			serverIndex, err := GetServerIndxByClientAddr(clientAddress, true)
 			if err != nil {
 				panic(err)
 			}
 			go ForwardUDPPacket(
 				packet,
 				handle,
-				Address{
-					Mac:  GetStringFromConfig("addresses.server_mac"),
-					Ip:   GetStringFromConfig("addresses.server_ip"),
-					Port: GetStringFromConfig("addresses.server_port"),
-				},
+				servers[serverIndex],
 				Address{
 					Mac:  GetStringFromConfig("addresses.proxy_mac"),
 					Ip:   GetStringFromConfig("addresses.proxy_ip"),
@@ -244,7 +231,7 @@ func HandleServerConnection() {
 		log.Fatal(err)
 	}
 
-	err = handle.SetBPFFilter("src host " + GetStringFromConfig("addresses.server_ip"))
+	err = handle.SetBPFFilter(fmt.Sprintf("dst portrange %d-%d", GetIntFromConfig("redis.first_available_port"), GetIntFromConfig("redis.last_available_port")))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -272,7 +259,7 @@ func HandleServerConnection() {
 			if err != nil {
 				panic(err)
 			}
-			clientAddress, err := GetAddrByPort(port)
+			clientAddress, err := GetClientAddrByPort(port)
 			if err != nil {
 				fmt.Println("err: " + err.Error())
 				continue
@@ -293,7 +280,7 @@ func HandleServerConnection() {
 			if err != nil {
 				panic(err)
 			}
-			clientAddress, err := GetAddrByPort(port)
+			clientAddress, err := GetClientAddrByPort(port)
 			if err != nil {
 				fmt.Println("err: " + err.Error())
 				continue

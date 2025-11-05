@@ -3,15 +3,28 @@ pcap_snaplen: 65535
 pcap_promiscuous: false
 pcap_file_name: "pcap_logs.pcap"
 
+servers:
+  number_of_servers: 3
+  availability_check_interval_sec: 5
+  availability_check_timeout_sec: 2
+
 addresses:
   proxy_ip: "192.168.1.50"
   proxy_client_port: "8081"
   proxy_server_port: "9091"
   proxy_mac: "fe:52:69:93:75:41"
 
-  server_ip: "192.168.1.60"
-  server_port: "9090"
-  server_mac: "fe:52:69:93:75:42"
+  server1_ip: "192.168.1.60"
+  server1_port: "9090"
+  server1_mac: "fe:52:69:93:75:42"
+
+  server2_ip: "192.168.1.61"
+  server2_port: "9090"
+  server2_mac: "fe:52:69:93:76:42"
+
+  server3_ip: "192.168.1.62"
+  server3_port: "9090"
+  server3_mac: "fe:52:69:93:77:42"
 
   client_ip: "192.168.1.70"
   client_port: "8080"
@@ -28,7 +41,10 @@ redis:
   first_available_port: 10000
   last_available_port: 10100
   available_ports_queue_name: "available_ports"
+  available_servers_queue_name: "available_servers"
   port_key_prefix: "port_"
+  server_index_field: "server_index"
+  port_field: "port"
   ip_key_prefix: "ip_"
   tcp_key_prefix: "t_"
   udp_key_prefix: "u_"
@@ -41,3 +57,4 @@ error:
   missing_config: "Missing configuration for: "
   port_conflict: "Port conflict"
   port_does_not_exist: "Port does not exist"
+  no_available_servers: "There are no available servers"
