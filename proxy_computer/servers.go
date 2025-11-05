@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"net"
 	"time"
 )
@@ -12,17 +13,17 @@ var currAvailableServerIndex int
 
 func AssignServerIps() {
 	servers = []Address{
-		Address{
+		{
 			Mac:  GetStringFromConfig("addresses.server1_mac"),
 			Ip:   GetStringFromConfig("addresses.server1_ip"),
 			Port: GetStringFromConfig("addresses.server1_port"),
 		},
-		Address{
+		{
 			Mac:  GetStringFromConfig("addresses.server2_mac"),
 			Ip:   GetStringFromConfig("addresses.server2_ip"),
 			Port: GetStringFromConfig("addresses.server2_port"),
 		},
-		Address{
+		{
 			Mac:  GetStringFromConfig("addresses.server3_mac"),
 			Ip:   GetStringFromConfig("addresses.server3_ip"),
 			Port: GetStringFromConfig("addresses.server3_port"),
@@ -83,8 +84,13 @@ func isServerUp(server Address) bool {
 }
 
 func UpdateServerAvailability(index int) {
-	if isServerUp(servers[index]) {
-		availableServers.SetBitOn(index)
+	isUp := isServerUp(servers[index])
+	SetServerAvailability(index, isUp)
+
+	if !isUp {
+		fmt.Println("Server", servers[index].Ip, "is down")
+	} else {
+		fmt.Println("Server", servers[index].Ip, "is up")
 	}
 }
 

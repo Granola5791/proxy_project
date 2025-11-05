@@ -40,9 +40,9 @@ func HandleConnection(conn net.Conn) {
 
 }
 
-func ListenForTCP(ip string, port string) {
+func ListenForTCP(port string) {
 
-	listener, err := net.Listen("tcp", ip+":"+port)
+	listener, err := net.Listen("tcp", ":"+port)
 	if err != nil {
 		log.Fatalf("Failed to connect to server: %v", err)
 	}
@@ -90,8 +90,8 @@ func ListenForUDP(ip string, port int) {
 
 func main() {
 
-	// ListenForTCP("192.168.1.60", "9090")
+	ListenForTCP("9090")
 
-	ListenForUDP("192.168.1.60", 9090)
+	// ListenForUDP("192.168.1.60", 9090)
 
 }

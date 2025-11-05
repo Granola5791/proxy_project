@@ -22,6 +22,7 @@ func main() {
 	}
 
 	InitRedis()
+	InitServers()
 	
 	go HandleClientConnection()
 	go HandleServerConnection()

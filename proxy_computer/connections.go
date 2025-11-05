@@ -85,7 +85,7 @@ func HandlePortOut(addr Address, isUDP bool) error {
 	if err != nil {
 		return err
 	} else if exists {
-		port, err := RedisGet(transportTypePrefix + addr.Ip + ":" + addr.Port)
+		port, err := GetPortByClientAddr(addr, isUDP)
 		if err != nil {
 			return err
 		}
@@ -102,11 +102,15 @@ func HandlePortOut(addr Address, isUDP bool) error {
 		if err != nil {
 			return err
 		}
-		err = RedisSet(transportTypePrefix+addr.Ip+":"+addr.Port, port, ipTTL)
+		serverAddr, err := GetNextAvailavleServer()
 		if err != nil {
 			return err
 		}
-		err = RedisSet(portPrefix+port, fmt.Sprintf("%s,%s,%s", addr.Mac, addr.Ip, addr.Port), portTTL)
+		err = SetServerAddrAndPortByClientAddr(addr, serverAddr, port, isUDP, ipTTL)
+		if err != nil {
+			return err
+		}
+		err = SetClientAddrByPort(addr, port, portTTL)
 		if err != nil {
 			return err
 		}
@@ -162,18 +166,18 @@ func HandleClientConnection() {
 			if err != nil {
 				panic(err)
 			}
-			srcPort, err := RedisGet(GetStringFromConfig("redis.tcp_key_prefix") + clientAddress.Ip + ":" + clientAddress.Port)
+			srcPort, err := GetPortByClientAddr(clientAddress, false)
+			if err != nil {
+				panic(err)
+			}
+			serverAddr, err := GetServerAddrByClientAddr(clientAddress, false)
 			if err != nil {
 				panic(err)
 			}
 			go ForwardTCPPacket(
 				packet,
 				handle,
-				Address{
-					Mac:  GetStringFromConfig("addresses.server_mac"),
-					Ip:   GetStringFromConfig("addresses.server_ip"),
-					Port: GetStringFromConfig("addresses.server_port"),
-				},
+				serverAddr,
 				Address{
 					Mac:  GetStringFromConfig("addresses.proxy_mac"),
 					Ip:   GetStringFromConfig("addresses.proxy_ip"),
@@ -186,18 +190,18 @@ func HandleClientConnection() {
 			if err != nil {
 				panic(err)
 			}
-			srcPort, err := RedisGet(GetStringFromConfig("redis.udp_key_prefix") + clientAddress.Ip + ":" + clientAddress.Port)
+			srcPort, err := GetPortByClientAddr(clientAddress, true)
+			if err != nil {
+				panic(err)
+			}
+			serverAddr, err := GetServerAddrByClientAddr(clientAddress, true)
 			if err != nil {
 				panic(err)
 			}
 			go ForwardUDPPacket(
 				packet,
 				handle,
-				Address{
-					Mac:  GetStringFromConfig("addresses.server_mac"),
-					Ip:   GetStringFromConfig("addresses.server_ip"),
-					Port: GetStringFromConfig("addresses.server_port"),
-				},
+				serverAddr,
 				Address{
 					Mac:  GetStringFromConfig("addresses.proxy_mac"),
 					Ip:   GetStringFromConfig("addresses.proxy_ip"),
@@ -221,7 +225,7 @@ func HandleServerConnection() {
 		log.Fatal(err)
 	}
 
-	err = handle.SetBPFFilter("src host " + GetStringFromConfig("addresses.server_ip"))
+	err = handle.SetBPFFilter(fmt.Sprintf("dst portrange %d-%d", GetIntFromConfig("redis.first_available_port"), GetIntFromConfig("redis.last_available_port")))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -249,7 +253,7 @@ func HandleServerConnection() {
 			if err != nil {
 				panic(err)
 			}
-			clientAddress, err := GetAddrByPort(port)
+			clientAddress, err := GetClientAddrByPort(port)
 			if err != nil {
 				fmt.Println("err: " + err.Error())
 				continue
@@ -270,7 +274,7 @@ func HandleServerConnection() {
 			if err != nil {
 				panic(err)
 			}
-			clientAddress, err := GetAddrByPort(port)
+			clientAddress, err := GetClientAddrByPort(port)
 			if err != nil {
 				fmt.Println("err: " + err.Error())
 				continue
